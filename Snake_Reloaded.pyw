@@ -1,24 +1,51 @@
-from Custom.funcs import Scale, get_events
 from copy import copy
 import classes as cls
-from Custom.Sprites import *
+from Sprites import *
 from sys import exit
 import pygame as pg
 import time
-import client
 import string
 import random
-import threading
 
 pg.init()
+
+
+def get_events():
+    events = []
+    for event in pg.event.get():
+        if event.type == pg.QUIT:
+            events.append('EXIT')
+        elif event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
+            events.append('LEFT_CLICK')
+        elif event.type == pg.KEYDOWN:
+            if event.key == pg.K_UP:
+                events.append('UP')
+            elif event.key == pg.K_RIGHT:
+                events.append('RIGHT')
+            elif event.key == pg.K_DOWN:
+                events.append('DOWN')
+            elif event.key == pg.K_LEFT:
+                events.append('LEFT')
+            elif event.key == pg.K_ESCAPE:
+                events.append('ESCAPE')
+            elif event.key == pg.K_RETURN:
+                events.append('RETURN')
+            elif event.key == pg.K_BACKSPACE:
+                events.append('BACKSPACE')
+            elif event.key == pg.K_RETURN:
+                events.append('RETURN')
+            else:
+                events.append(['UNICODE', event.unicode])
+    return events
+
+
+def Scale(size: float, value: float, integer=True):
+    return round(size * (value / 650)) if integer else size * (value / 650)
 
 
 class GameEngine:
     def __init__(self,
                  dimensions=(pg.display.get_desktop_sizes()[0][0] - 400, pg.display.get_desktop_sizes()[0][1] - 150)):
-        self.opponent = cls.Snake()
-        self.multiplayer = False
-        self.online = client.online
         self.dimensions = self.width, self.height = dimensions
         self.display_selected = True
         self.paused = False
@@ -81,16 +108,9 @@ class GameEngine:
                Scale(self.height, 0.23, False),
                (255, 255, 255), Scale(self.height, 5), self.leaderboard,
                ['classic', None])
-        Button('joinRoom', pg.image.load('Game_Images/WIP.png'),
-               Scale(self.height, 1.5, False),
-               (255, 255, 255), Scale(self.height, 5), self.joinRoom)
-        Button('createRoom', pg.image.load('Game_Images/WIP.png'),
-               Scale(self.height, 1.5, False),
-               (255, 255, 255), Scale(self.height, 5), self.createRoom)
 
         Slider('Volume', self.surface, (0, 0), (50, 50, 50), (255, 255, 255), (300, 100), (0, 100), 50)
         TextBox('name', self.surface, [self.height / 2] * 2, (self.height / 4 * 3, self.height / 4), (255, 0, 0), 5, (255, 255, 255), (0, 0, 0), Scale(self.height, 75), 'Enter name:', (230, 230, 230))
-        TextBox('roomCode', self.surface, [self.height / 2] * 2, (self.height / 4 * 3, self.height / 4), (255, 0, 0), 5, (255, 255, 255), (0, 0, 0), Scale(self.height, 75), 'Enter code:', (230, 230, 230))
         self.active_sliders: list[Slider] = []
 
         self.Font = {'Text': pg.font.SysFont("arial", Scale(self.height, 30)),
@@ -136,9 +156,6 @@ class GameEngine:
                                                                                                       winner_name)
                     Button.buttons['Main_Menu'].set_pos((self.height / 2, self.height - Scale(self.height, 100)))
                     self.active_buttons.append(Button.buttons['Main_Menu'])
-                if textBox.name == "roomCode":
-                    if client.joinRoom(textBox.get_text().upper()) == 'Joining room':
-                        self.connected()
             textBox.run(letter)
 
     def runSliders(self):
@@ -166,8 +183,6 @@ class GameEngine:
             pg.display.flip()
 
     def main_menu(self):
-        if self.online:
-            client.leaveRoom()
         for sound in self.Sounds.values():
             sound.set_volume(Slider.sliders['Volume'].get_value() / 100)
         self.active_sliders = []
@@ -180,12 +195,10 @@ class GameEngine:
         self.loop_funcs = {}
         self.background = pg.transform.scale(pg.image.load(r'Game_Images\Backgrounds\Snake_Menu.png'),
                                              (self.width, self.height))
-        self.active_buttons = [Button.buttons['Start'], Button.buttons['Settings'], Button.buttons['Leaderboard'], Button.buttons['joinRoom'], Button.buttons['createRoom']]
+        self.active_buttons = [Button.buttons['Start'], Button.buttons['Settings'], Button.buttons['Leaderboard']]
         Button.buttons['Start'].set_pos(self.origin)
         Button.buttons['Settings'].set_pos((self.h_width, self.h_height + Scale(self.height, 100)))
         Button.buttons['Leaderboard'].set_pos((self.h_width, self.h_height + Scale(self.height, 200)))
-        Button.buttons['createRoom'].set_pos((self.width * 0.2, self.h_height + Scale(self.height, 100)))
-        Button.buttons['joinRoom'].set_pos((self.width * 0.8, self.h_height + Scale(self.height, 100)))
 
     def settings(self):
         self.background = pg.transform.scale(pg.image.load(r'Game_Images\Backgrounds\Settings_Background.png'),
@@ -204,9 +217,9 @@ class GameEngine:
                     self.game_mode[idx] = gameMode
 
         Button.buttons['Open_Leaderboard'].Selected = self.game_mode[1] == 'open'
-        Button.buttons['Closed_Leaderboard'].Selected = not self.game_mode[1] == 'open'
+        Button.buttons['Closed_Leaderboard'].Selected = self.game_mode[1] != 'open'
         Button.buttons['Portal_Leaderboard'].Selected = self.game_mode[0] == 'portal'
-        Button.buttons['Classic_Leaderboard'].Selected = not self.game_mode[0] == 'portal'
+        Button.buttons['Classic_Leaderboard'].Selected = self.game_mode[0] != 'portal'
 
         self.activeText = []
         self.loop_funcs = {}
@@ -265,15 +278,9 @@ class GameEngine:
         self.framerate = 10
         [apple.generate(self.snake) for apple in self.apples]
         self.active_buttons = []
-        if self.multiplayer:
-            threading.Thread(target=self.liveUpdates).start()
-            self.loop_funcs = {self.game_mechanics: current_time, self.snake.control: self.events,
-                               self.snake.move: self.game_mode[1], self.snake.draw: self.surface,
-                               cls.Apple.draw: self.surface, self.opponent.draw: self.surface}
-        else:
-            self.loop_funcs = {self.game_mechanics: current_time, self.snake.control: self.events,
-                               self.snake.move: self.game_mode[1], self.snake.draw: self.surface,
-                               cls.Apple.draw: self.surface}
+        self.loop_funcs = {self.game_mechanics: current_time, self.snake.control: self.events,
+                           self.snake.move: self.game_mode[1], self.snake.draw: self.surface,
+                           cls.Apple.draw: self.surface}
         self.background = pg.Surface(self.dimensions)
         self.background.blit(pg.transform.scale(pg.image.load(r'Game_Images\Backgrounds\Checkerboard_Background.png'),
                                                 (self.height, self.height)), [0, 0])
@@ -292,50 +299,6 @@ class GameEngine:
         self.activeTextBoxes = [TextBox.textBoxes['name']]
         self.background.blit(pg.transform.scale(pg.image.load(r'Game_Images\Backgrounds\Snake_Game_Over.png'),
                                                 (self.height, self.height)), (0, 0))
-
-    def joinRoom(self):
-        if self.online:
-            self.activeTextBoxes = [TextBox.textBoxes['roomCode']]
-            self.background = pg.transform.scale(pg.image.load(r'Game_Images\Backgrounds\Snake_Background.png'),
-                                                 (self.width, self.height))
-            self.active_buttons = [Button.buttons['Main_Menu']]
-            Button.buttons['Main_Menu'].set_pos((self.h_width, self.height - Scale(self.height, 60)))
-        else:
-            self.offline()
-
-    def createRoom(self):
-        if self.online:
-            code = ''.join(random.choices(string.ascii_uppercase) + random.choices(string.ascii_uppercase) + random.choices(string.ascii_uppercase))
-            self.background = pg.transform.scale(pg.image.load(r'Game_Images\Backgrounds\Snake_Background.png'), (self.width, self.height))
-            self.active_buttons = [Button.buttons['Main_Menu']]
-            self.activeText = [Text(f'Room Code: {code}', self.Font['Title'], (255, 255, 255), self.origin, position_locale='centre')]
-            self.loop_funcs = {self.checkForConnection: None}
-            Button.buttons['Main_Menu'].set_pos((self.h_width, self.height - Scale(self.height, 60)))
-            creationResult = client.createRoom(code)
-            if creationResult == 'Invalid Room #':
-                self.createRoom()
-        else:
-            self.offline()
-
-    def offline(self):
-        self.background = pg.transform.scale(pg.image.load(r'Game_Images\Backgrounds\Snake_Background.png'), (self.width, self.height))
-        Button.buttons['Main_Menu'].set_pos((self.h_width, self.height - Scale(self.height, 60)))
-        self.active_buttons = [Button.buttons['Main_Menu']]
-        self.activeText = [Text('Unable to connect to Server!', self.Font['Title'], (255, 255, 255), self.origin, position_locale='centre')]
-
-    def checkForConnection(self):
-        if client.isOpponentConnected():
-            self.connected()
-
-    def connected(self):
-        self.multiplayer = True
-        self.loop_funcs = {}
-        self.getGameMode()
-
-    def liveUpdates(self):
-        while self.multiplayer:
-            client.sendSnakeData(self.snake)
-            self.opponent = client.updateOpponent()
 
     def game_mechanics(self, start_time):
         hiScore = self.leaderboards[f'{self.game_mode[0]}:{self.game_mode[1]}'].ranks[0]
@@ -394,15 +357,9 @@ class GameEngine:
             if self.paused:
                 self.framerate = 10
                 self.active_buttons = []
-                if self.multiplayer:
-                    self.loop_funcs = {self.game_mechanics: game_duration, self.snake.control: self.events,
-                                       self.snake.move: self.game_mode[1], self.snake.draw: self.surface,
-                                       cls.Apple.draw: self.surface,
-                                       self.opponent.draw: self.surface}
-                else:
-                    self.loop_funcs = {self.game_mechanics: game_duration, self.snake.control: self.events,
-                                       self.snake.move: self.game_mode[1], self.snake.draw: self.surface,
-                                       cls.Apple.draw: self.surface}
+                self.loop_funcs = {self.game_mechanics: game_duration, self.snake.control: self.events,
+                                   self.snake.move: self.game_mode[1], self.snake.draw: self.surface,
+                                   cls.Apple.draw: self.surface}
                 self.paused = False
                 pg.mouse.set_visible(False)
             else:
@@ -414,12 +371,8 @@ class GameEngine:
     def pause(self, game_duration):
         self.framerate = 30
         self.paused = True
-        if self.multiplayer:
-            self.loop_funcs = {self.game_mechanics: game_duration, self.snake.draw: self.surface,
-                               cls.Apple.draw: self.surface, self.opponent.draw: self.surface}
-        else:
-            self.loop_funcs = {self.game_mechanics: game_duration, self.snake.draw: self.surface,
-                               cls.Apple.draw: self.surface}
+        self.loop_funcs = {self.game_mechanics: game_duration, self.snake.draw: self.surface,
+                           cls.Apple.draw: self.surface}
 
         Button.buttons['Main_Menu'].set_pos((self.height / 2, self.height - Scale(self.height, 100)))
         self.active_buttons = [Button.buttons['Main_Menu']]
@@ -427,8 +380,6 @@ class GameEngine:
 
     def exit_game(self):
         cls.Leaderboard.writeToFile()
-        if self.online:
-            client.disconnect()
         exit()
 
 
