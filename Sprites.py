@@ -4,6 +4,21 @@ from Custom import funcs
 
 pygame.init()
 
+
+def constrain(value: int | float, constraints: list | tuple, overflow=False):
+    if value < constraints[0]:
+        if overflow:
+            value = constraints[1]
+        else:
+            value = constraints[0]
+    elif value > constraints[1]:
+        if overflow:
+            value = constraints[0]
+        else:
+            value = constraints[1]
+    return value
+
+
 class Text:
     def __init__(self, text: str, font: pygame.font, colour: tuple[int], position, position_locale='left'):
         self.text = text
@@ -93,7 +108,7 @@ class Slider:
         self.slider = pygame.draw.circle(self.Surface, self.colours[1], (slider_x_coord, self.coord[1]),
                                          self.Dimensions[1] / 2)
         if self.slider.collidepoint(mouse_pos) and click:
-            slider_x_coord = funcs.constrain(mouse_pos[0], (self.edge_coords[0][0], self.edge_coords[1][0]))
+            slider_x_coord = constrain(mouse_pos[0], (self.edge_coords[0][0], self.edge_coords[1][0]))
             self.value = (slider_x_coord - self.edge_coords[0][0]) * (self.range[1] - self.range[0]) / self.Dimensions[0] + self.range[0]
 
     def get_value(self):
@@ -176,9 +191,9 @@ class TextBox:
     def move_cursor(self, forward):
         if self.selected:
             if forward:
-                self.cursor_idx = funcs.constrain(self.cursor_idx + 1, (0, len(self.text)), False)
+                self.cursor_idx = constrain(self.cursor_idx + 1, (0, len(self.text)), False)
             else:
-                self.cursor_idx = funcs.constrain(self.cursor_idx - 1, (0, len(self.text)), False)
+                self.cursor_idx = constrain(self.cursor_idx - 1, (0, len(self.text)), False)
 
     def get_selected(self):
         return self.selected
