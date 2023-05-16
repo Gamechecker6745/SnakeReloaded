@@ -1,6 +1,5 @@
 import pygame
 import time
-from Custom import funcs
 
 pygame.init()
 
