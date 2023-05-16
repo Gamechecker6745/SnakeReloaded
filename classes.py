@@ -1,7 +1,10 @@
-from Custom.funcs import Scale
 import random
 import pygame as pg
 import json
+
+
+def Scale(size: float, value: float, integer=True):
+    return round(size * (value / 650)) if integer else size * (value / 650)
 
 
 class Snake:
