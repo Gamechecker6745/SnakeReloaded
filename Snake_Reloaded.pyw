@@ -69,7 +69,7 @@ class GameEngine:
         self.background = pg.Surface(self.dimensions)
         self.surface = pg.display.set_mode(self.dimensions)
         pg.display.set_caption('Snake Reloaded')
-        pg.display.set_icon(pg.image.load(r'Game_Images\Snake_Icon.ico'))
+        pg.display.set_icon(pg.image.load(r'Game_Images/Snake_Icon.ico'))
         Button('Start', pg.image.load('Game_Images/Buttons/Start_Button.png'), Scale(self.height, 0.35, False),
                (255, 255, 255),
                Scale(self.height, 5), self.getGameMode)
@@ -117,8 +117,8 @@ class GameEngine:
                      'Title': pg.font.SysFont("comicsansms", Scale(self.height, 72), bold=True),
                      'Subtitle': pg.font.SysFont("comicsansms", Scale(self.height, 32), bold=True)}
 
-        self.Sounds: dict[str: pg.mixer.Sound] = {'Eat': pg.mixer.Sound(r'Game_Sounds\Eat.mp3'),
-                                                  'Game_Over': pg.mixer.Sound(r'Game_Sounds\Game_Over.mp3')}
+        self.Sounds: dict[str: pg.mixer.Sound] = {'Eat': pg.mixer.Sound('Game_Sounds/Eat.mp3'),
+                                                  'Game_Over': pg.mixer.Sound('Game_Sounds/Game_Over.mp3')}
 
     def get_events(self):
         self.events.clear()
@@ -193,7 +193,7 @@ class GameEngine:
         self.activeText = []
         self.activeTextBoxes = []
         self.loop_funcs = {}
-        self.background = pg.transform.scale(pg.image.load(r'Game_Images\Backgrounds\Snake_Menu.png'),
+        self.background = pg.transform.scale(pg.image.load('Game_Images/Backgrounds/Snake_Menu.png'),
                                              (self.width, self.height))
         self.active_buttons = [Button.buttons['Start'], Button.buttons['Settings'], Button.buttons['Leaderboard']]
         Button.buttons['Start'].set_pos(self.origin)
@@ -201,7 +201,7 @@ class GameEngine:
         Button.buttons['Leaderboard'].set_pos((self.h_width, self.h_height + Scale(self.height, 200)))
 
     def settings(self):
-        self.background = pg.transform.scale(pg.image.load(r'Game_Images\Backgrounds\Settings_Background.png'),
+        self.background = pg.transform.scale(pg.image.load('Game_Images/Backgrounds/Settings_Background.png'),
                                              (self.width, self.height))
         self.activeText = [Text('VOLUME', self.Font['Title'], (255, 255, 0),
                                 (self.h_width, self.h_height / 2 + Scale(self.height, 60)), 'centre')]
@@ -242,7 +242,7 @@ class GameEngine:
         self.active_buttons = [Button.buttons['Main_Menu'], Button.buttons['Open_Leaderboard'],
                                Button.buttons['Closed_Leaderboard'], Button.buttons['Portal_Leaderboard'],
                                Button.buttons['Classic_Leaderboard']]
-        self.background = pg.transform.scale(pg.image.load(r'Game_Images\Backgrounds\Snake_Background.png'),
+        self.background = pg.transform.scale(pg.image.load('Game_Images/Backgrounds/Snake_Background.png'),
                                              (self.width, self.height))
         self.leaderboards[f'{self.game_mode[0]}:{self.game_mode[1]}'].draw((self.background, self.Font['Subtitle'],
                                                                             self.Font['Text'], (self.h_width - (self.width - self.height) / 2, 0), False))
@@ -250,7 +250,7 @@ class GameEngine:
     def getGameMode(self):
         self.activeTextBoxes = []
         self.activeText = []
-        self.background = pg.transform.scale(pg.image.load(r'Game_Images\Backgrounds\Snake_Background.png'),
+        self.background = pg.transform.scale(pg.image.load('Game_Images/Backgrounds/Snake_Background.png'),
                                              (self.width, self.height))
         Button.buttons['Classic'].set_pos((self.width / 3, self.h_height))
         Button.buttons['Portal'].set_pos((self.width / 3 * 2, self.h_height))
@@ -259,7 +259,7 @@ class GameEngine:
 
     def getMode(self, gameMode):
         self.game_mode[0] = gameMode
-        self.background = pg.transform.scale(pg.image.load(r'Game_Images\Backgrounds\Snake_Background.png'),
+        self.background = pg.transform.scale(pg.image.load('Game_Images/Backgrounds/Snake_Background.png'),
                                              (self.width, self.height))
         Button.buttons['Open'].set_pos((self.width / 3, self.h_height))
         Button.buttons['Closed'].set_pos((self.width / 3 * 2, self.h_height))
@@ -282,7 +282,7 @@ class GameEngine:
                            self.snake.move: self.game_mode[1], self.snake.draw: self.surface,
                            cls.Apple.draw: self.surface}
         self.background = pg.Surface(self.dimensions)
-        self.background.blit(pg.transform.scale(pg.image.load(r'Game_Images\Backgrounds\Checkerboard_Background.png'),
+        self.background.blit(pg.transform.scale(pg.image.load('Game_Images/Backgrounds/Checkerboard_Background.png'),
                                                 (self.height, self.height)), [0, 0])
         pg.draw.rect(self.background, (61, 133, 69), pg.Rect(self.height + 1, 0, self.width - self.height, self.height))
 
@@ -297,7 +297,7 @@ class GameEngine:
         self.loop_funcs = {self.leaderboards[f'{self.game_mode[0]}:{self.game_mode[1]}'].draw: (
             self.background, self.Font['Subtitle'], self.Font['Text'], (self.height, 0), True)}
         self.activeTextBoxes = [TextBox.textBoxes['name']]
-        self.background.blit(pg.transform.scale(pg.image.load(r'Game_Images\Backgrounds\Snake_Game_Over.png'),
+        self.background.blit(pg.transform.scale(pg.image.load('Game_Images/Backgrounds/Snake_Game_Over.png'),
                                                 (self.height, self.height)), (0, 0))
 
     def game_mechanics(self, start_time):
@@ -380,6 +380,7 @@ class GameEngine:
 
     def exit_game(self):
         cls.Leaderboard.writeToFile()
+        pg.quit()
         exit()
 
 
