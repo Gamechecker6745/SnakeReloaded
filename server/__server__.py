@@ -70,6 +70,7 @@ class Server:
     def manage_connections(self):
         try:
             connection, address = self.server.accept()
+            print("ACCEPT")
             threading.Thread(target=Client, args=(self, connection, address), daemon=True).start()
             log(f"CONNECTED", address[0])
         except OSError:

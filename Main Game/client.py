@@ -1,6 +1,7 @@
 import socket
 import threading
 import pickle
+import struct
 from time import sleep
 
 from leaderboard import Leaderboard
@@ -18,7 +19,6 @@ class Client:
 
         self.ADDRESS = self.HOST, self.PORT = socket.gethostbyname(socket.gethostname()), 7070  # "192.168.0.12", 7070
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self._COOLDOWN = 1 / 100
 
         self._sending = False
         self.attempting_connection = False
@@ -46,13 +46,10 @@ class Client:
 
     def sendMessage(self, message):
         self._sending = True
-        while self._time_since_last_send < self._COOLDOWN:
-            pass
-
-        encoded = pickle.dumps(message)
-        self.client.send(pickle.dumps(len(encoded)))
-        sleep(1 / 100)
-        self.client.send(encoded)
+        packet = pickle.dumps(message)
+        length = struct.pack('!I', len(packet))
+        packet = length + packet
+        self.client.send(packet)
         self._time_since_last_send = 0
         self._sending = False
 
@@ -60,8 +57,14 @@ class Client:
         threading.Thread(target=self.sendMessage, args=(message,), daemon=True).start()
 
     def recvMessage(self):
-        msgLength = pickle.loads(self.client.recv(LENGTH_BYTE))
-        msg = pickle.loads(self.client.recv(msgLength))
+        buf = b''
+        while len(buf) < 4:
+            buf += self.client.recv(4 - len(buf))
+
+        length = struct.unpack('!I', buf)[0]
+
+        rawMessage = self.client.recv(length)
+        msg = pickle.loads(rawMessage)
         return msg
 
     def listen(self):

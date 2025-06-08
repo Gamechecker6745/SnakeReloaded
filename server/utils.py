@@ -1,6 +1,7 @@
 import pickle
 import string
 import random
+import struct
 from time import sleep
 from room import Room
 
@@ -25,14 +26,21 @@ def constrain(value: int | float, constraints: list | tuple, overflow=False):
 
 def sendMessage(connection, message, delay=0):
     sleep(delay)
-    encoded = pickle.dumps(message)
-    connection.send(pickle.dumps(len(encoded)))
-    connection.send(encoded)
+    packet = pickle.dumps(message)
+    length = struct.pack('!I', len(packet))
+    packet = length + packet
+    connection.send(packet)
 
 
 def recvMessage(connection):
-    msgLength = pickle.loads(connection.recv(LENGTH_BYTE))
-    msg = pickle.loads(connection.recv(msgLength))
+    buf = b''
+    while len(buf) < 4:
+        buf += connection.recv(4 - len(buf))
+
+    length = struct.unpack('!I', buf)[0]
+
+    rawMessage = connection.recv(length)
+    msg = pickle.loads(rawMessage)
     return msg
 
 
