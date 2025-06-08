@@ -3,7 +3,7 @@ import numpy as np
 
 DEBUG = False
 
-DIMENSIONS = WIDTH, HEIGHT = 1500, 1000
+DIMENSIONS = WIDTH, HEIGHT = np.array((1500, 1000))
 H_WIDTH, H_HEIGHT = CENTRE = tuple(np.array(DIMENSIONS) / 2)
 
 CAPTION = 'SnakeReloaded'

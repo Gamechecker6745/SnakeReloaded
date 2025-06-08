@@ -17,9 +17,10 @@ class SnakeReloaded:
         self.running = False
 
         # pygame
+        transformedDimensions = DIMENSIONS / DIMENSIONS[1] * (pg.display.get_desktop_sizes()[0][1]- 300)
         self.surface = pg.Surface(DIMENSIONS)
-        self.screen = pg.display.set_mode(DIMENSIONS, pg.RESIZABLE)
-        self.dimensions = self.surface.get_size()
+        self.screen = pg.display.set_mode(transformedDimensions, pg.RESIZABLE)
+        self.dimensions = self.screen.get_size()
 
         self.global_leaderboards = {}
 
