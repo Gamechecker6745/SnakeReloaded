@@ -17,7 +17,7 @@ class Client:
         self.app = app
         self.online = False
 
-        self.ADDRESS = self.HOST, self.PORT = socket.gethostbyname(socket.gethostname()), 7070  # "192.168.0.12", 7070
+        self.ADDRESS = self.HOST, self.PORT = socket.gethostbyname(socket.gethostname()), 7070  # "192.168.0.25", 7070
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         self._sending = False

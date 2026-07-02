@@ -22,7 +22,6 @@ class Client:
     def run(self):
         while self.connected:
             message = recvMessage(self.connection)
-            print("LOOP")
 
             match message[0]:
                 case 0:  # disconnect
